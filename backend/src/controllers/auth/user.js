@@ -1,4 +1,5 @@
 import asyncHandler from 'express-async-handler'
+import User from '../../models/auth/userModel.js';
 
 export const userRegister = asyncHandler(async (req,res) => {
     const {name,email,password} = req.body;
@@ -7,4 +8,12 @@ export const userRegister = asyncHandler(async (req,res) => {
             message:"all fields are required"
         })
     }
+    if(password.length < 8) {
+        return res.status(400)
+        .json({message: "Password must be at least 8 chars"})
+    }
+
+    const userExist = await User.findOne({email})
+
+    console.log(userExist);
 })
