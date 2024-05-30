@@ -1,63 +1,28 @@
-import mongoose from "mongoose";
-import bcrypt from "bcrypt";
+import prisma from './prisma';
+import bcrypt from 'bcrypt';
 
-const UserSchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      required: [true, "Please provide your name"],
-    },
+// Example function to create a new user
+async function createUser(userData) {
+  const { name, email, password, photo, bio, role } = userData;
 
-    email: {
-      type: String,
-      required: [true, "Please an email"],
-      unique: true,
-      trim: true,
-      match: [
-        /^([\w-\.]+@([\w-]+\.)+[\w-]{2,4})?$/,
-        "Please add a valid email",
-      ],
-    },
-    password: {
-      type: String,
-      required: [true, "Please add password!"],
-    },
-
-    photo: {
-      type: String,
-      default: "https://avatars.githubusercontent.com/u/19819005?v=4",
-    },
-
-    bio: {
-      type: String,
-      default: "I am a new user.",
-    },
-
-    role: {
-      type: String,
-      enum: ["user", "admin", "creator"],
-      default: "user",
-    },
-
-    isVerified: {
-      type: Boolean,
-      default: false,
-    },
-  },
-  { timestamps: true, minimize: true }
-);
-
-UserSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) {
-    return next();
-  }
-
+  // Hash the password
   const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(this.password, salt);
-  this.password = hashedPassword;
-  next();
-});
+  const hashedPassword = await bcrypt.hash(password, salt);
 
-const User = mongoose.models.User || mongoose.model('User', UserSchema);
+  // Create the user with Prisma
+  const newUser = await prisma.user.create({
+    data: {
+      name,
+      email,
+      password: hashedPassword,
+      photo,
+      bio,
+      role,
+      isVerified: false,
+    },
+  });
 
-export default User;
+  return newUser;
+}
+
+export default createUser;

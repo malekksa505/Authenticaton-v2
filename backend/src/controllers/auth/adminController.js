@@ -1,12 +1,12 @@
 import asyncHandler from "express-async-handler";
-import User from "../../models/auth/UserModel.js";
+import createUser from "../../models/auth/UserModel.js";
 
 export const deleteUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   // attempt to find and delete the user
   try {
-    const user = await User.findByIdAndDelete(id);
+    const user = await createUser.findByIdAndDelete(id);
     if (!user) {
       res.status(404).json({ message: "User not found" });
     }
@@ -19,7 +19,7 @@ export const deleteUser = asyncHandler(async (req, res) => {
 // get all users
 export const getAllUsers = asyncHandler(async (req, res) => {
   try {
-    const users = await User.find({});
+    const users = await createUser.find({});
 
     if (!users) {
       res.status(404).json({ message: "No users found" });

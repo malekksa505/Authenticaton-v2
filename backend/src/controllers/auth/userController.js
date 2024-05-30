@@ -1,5 +1,5 @@
 import asyncHandler from "express-async-handler";
-import User from "../../models/auth/UserModel.js";
+import createUser from "../../models/auth/UserModel.js";
 import generateToken from "../../helpers/generateToken.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -7,6 +7,7 @@ import Token from "../../models/auth/Token.js";
 import crypto from "node:crypto";
 import hashToken from "../../helpers/hashToken.js";
 import sendEmail from "../../helpers/sendEmail.js";
+import prisma from prisma;
 
 export const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
@@ -25,7 +26,7 @@ export const registerUser = asyncHandler(async (req, res) => {
   }
 
   // check if user already exists
-  const userExists = await User.findOne({ email });
+  const userExists = await createUser.findOne({ email });
 
   if (userExists) {
     // bad request
@@ -33,11 +34,13 @@ export const registerUser = asyncHandler(async (req, res) => {
   }
 
   // create new user
-  const user = await User.create({
-    name,
-    email,
-    password,
-  });
+  const user = await prisma.user.create({
+    data: {
+      name,
+      email,
+      password,
+    },
+  })
 
   // generate token with user id
   const token = generateToken(user._id);
@@ -82,7 +85,7 @@ export const loginUser = asyncHandler(async (req, res) => {
   }
 
   // check if user exists
-  const userExists = await User.findOne({ email });
+  const userExists = await createUser.findOne({ email });
 
   if (!userExists) {
     return res.status(404).json({ message: "User not found, sign up!" });
@@ -137,7 +140,7 @@ export const logoutUser = asyncHandler(async (req, res) => {
 // get user
 export const getUser = asyncHandler(async (req, res) => {
   // get user details from the token ----> exclude password
-  const user = await User.findById(req.user._id).select("-password");
+  const user = await createUser.findById(req.user._id).select("-password");
 
   if (user) {
     res.status(200).json(user);
@@ -150,7 +153,7 @@ export const getUser = asyncHandler(async (req, res) => {
 // update user
 export const updateUser = asyncHandler(async (req, res) => {
   // get user details from the token ----> protect middleware
-  const user = await User.findById(req.user._id);
+  const user = await createUser.findById(req.user._id);
 
   if (user) {
     // user properties to update
@@ -197,7 +200,7 @@ export const userLoginStatus = asyncHandler(async (req, res) => {
 
 // email verification
 export const verifyEmail = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id);
+  const user = await createUser.findById(req.user._id);
 
   // if user exists
   if (!user) {
@@ -275,7 +278,7 @@ export const verifyUser = asyncHandler(async (req, res) => {
   }
 
   //find user with the user id in the token
-  const user = await User.findById(userToken.userId);
+  const user = await createUser.findById(userToken.userId);
 
   if (user.isVerified) {
     // 400 Bad Request
@@ -297,7 +300,7 @@ export const forgotPassword = asyncHandler(async (req, res) => {
   }
 
   // check if user exists
-  const user = await User.findOne({ email });
+  const user = await createUser.findOne({ email });
 
   if (!user) {
     // 404 Not Found
@@ -370,7 +373,7 @@ export const resetPassword = asyncHandler(async (req, res) => {
   }
 
   // find user with the user id in the token
-  const user = await User.findById(userToken.userId);
+  const user = await createUser.findById(userToken.userId);
 
   // update user password
   user.password = password;
@@ -388,7 +391,7 @@ export const changePassword = asyncHandler(async (req, res) => {
   }
 
   //find user by id
-  const user = await User.findById(req.user._id);
+  const user = await createUser.findById(req.user._id);
 
   // compare current password with the hashed password in the database
   const isMatch = await bcrypt.compare(currentPassword, user.password);

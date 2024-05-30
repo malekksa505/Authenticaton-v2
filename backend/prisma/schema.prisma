@@ -1,0 +1,19 @@
+model User {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  email      String   @unique
+  password   String
+  photo      String   @default("https://avatars.githubusercontent.com/u/19819005?v=4")
+  bio        String   @default("I am a new user.")
+  role       String   @default("user")
+  isVerified Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("mongodb+srv://mdarwish:Salam@salam-malek.l5yufv0.mongodb.net/?retryWrites=true&w=majority&appName=Salam-Malek")
+}
